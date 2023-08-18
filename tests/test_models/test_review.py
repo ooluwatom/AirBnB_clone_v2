@@ -1,11 +1,11 @@
 #!/usr/bin/python3
-""" """
+""" Import necessary modules """
 from tests.test_models.test_base_model import test_basemodel
 from models.review import Review
 
 
 class test_review(test_basemodel):
-    """ """
+    """ Test the review class"""
 
     def __init__(self, *args, **kwargs):
         """ """

@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" """
+""" Import all necessary modules"""
 from tests.test_models.test_base_model import test_basemodel
 from models.amenity import Amenity
 
