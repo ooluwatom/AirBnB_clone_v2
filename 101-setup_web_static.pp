@@ -1,7 +1,72 @@
 # To setup the web server for deployment
 # using Puppet
 
-exec { 'server setup':
-  command  => 'sudo apt-get -y update && sudo apt-get -y install nginx && sudo service nginx start && sudo mkdir -p /data/web_static/shared/ && sudo mkdir -p /data/web_static/releases/test/ && echo "Holberton School" | sudo tee /data/web_static/releases/test/index.html > /dev/null && sudo ln -sf /data/web_static/releases/test/ /data/web_static/current && sudo chown -R ubuntu:ubuntu /data/ && sudo sed -i \'44i \\n\tlocation /hbnb_static {\n\t\talias /data/web_static/current/;\n\t}\' /etc/nginx/sites-available/default && sudo service nginx restart',
-  provider => shell,
+include stdlib
+
+# Update package lists
+exec { 'Update lists':
+    command => '/usr/bin/apt update'
+}
+
+# Install Nginx
+package { 'nginx':
+    ensure  => 'present',
+    require => Exec['Update lists']
+}
+
+# Create the directory tree
+exec { 'Create Directory Tree':
+    command => '/bin/mkdir -p /data/web_static/releases/test /data/web_static/shared',
+    require => Package['nginx']
+}
+
+$head = "  <head>\n  </head>"
+$body = "  <body>\n    Holberton School\n  </body>"
+$index = "<html>\n${head}\n${body}\n</html>\n"
+
+# Create a fake HTML file with simple content,
+# to test Nginx configuration
+file { 'Create Fake HTML':
+    ensure  => 'present',
+    path    => '/data/web_static/releases/test/index.html',
+    content => $index,
+    require => Exec['Create Directory Tree']
+}
+
+# Create a symbolic link '/data/web_static/current' linked to the
+# '/data/web_static/releases/test/' folder.
+file { 'Create Symbolic Link':
+    ensure  => 'link',
+    path    => '/data/web_static/current',
+    force   => true,
+    target  => '/data/web_static/releases/test',
+    require => File['Create Fake HTML']
+}
+
+# Ensures that Nginx is running
+service { 'nginx':
+    ensure  => 'running',
+    enable  => true,
+    require => Package['nginx']
+}
+
+# Set permissions for 'ubuntu' user
+exec { 'Set permissions':
+    command => '/bin/chown -R ubuntu:ubuntu /data',
+    require => File['Create Symbolic Link']
+}
+
+# Set a new location for a Nginx VHost 
+$loc_header='location /hbnb_static/ {'
+$loc_content='alias /data/web_static/current/;'
+$new_location="\n\t${loc_header}\n\t\t${loc_content}\n\t}\n"
+
+# Write the new location to the default Nginx VHost
+file_line { 'Set Nginx Location':
+    ensure  => 'present',
+    path    => '/etc/nginx/sites-available/default',
+    after   => 'server_name \_;',
+    line    => $new_location,
+    notify  => Service['nginx'],
+    require => Exec['Set permissions']
 }
