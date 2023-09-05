@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 """To Deploy web static package
 """
-from fabric.api import *
+from fabric.api import env, local, put, run
 from datetime import datetime
-from os import path
-
+from os.path import exists, isdir
 
 env.hosts = ['3.80.18.115', '3.90.65.239']
 env.user = 'ubuntu'

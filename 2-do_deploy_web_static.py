@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 """Python script toCompress web static package
 """
-from fabric.api import *
-from datetime import datetime
-from os import path
+from fabric.api import put, run, env
+from os.path import exists
 
 
 env.hosts = ['3.80.18.115', '3.90.65.239']
